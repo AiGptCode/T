@@ -1,131 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chooch AI Chat</title>
-  <style>
-    .chat-container {
-      width: 400px;
-      margin: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
-      background-color: #f9f9f9;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    .messages {
-      list-style-type: none;
-      padding: 0;
-    }
-    .message {
-      margin-bottom: 10px;
-    }
-    .user-message {
-      background-color: #e6f2ff;
-      padding: 8px;
-      border-radius: 5px;
-    }
-    .bot-message {
-      background-color: #d9ead3;
-      padding: 8px;
-      border-radius: 5px;
-    }
-    .image-upload {
-      margin-top: 10px;
-    }
-  </style>
-  <script>
-    async function imageChatPredict(modelId, parameters, fileInput, apiKey = null) {
-      const hostName = "https://chat-api.chooch.ai";
-      const prompt = parameters.prompt || "default prompt";
-      
-      const data = {
-        parameters: {
-          prompt,
-          ...parameters,
-          source_id: "7745844e-23bb-46fd-84ef-4f8e4aefc0b1",
-        },
-        model_id: modelId,
-      };
-
-      const url = `${hostName}/predict?api_key=${apiKey || ""}`;
-      let response;
-
-      if (!fileInput.files || fileInput.files.length === 0) {
-        // normal post
-        response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-      } else {
-        // load file and post
-        const formData = new FormData();
-        formData.append('data', JSON.stringify(data));
-        formData.append('file', fileInput.files[0]);
-
-        response = await fetch(url, {
-          method: 'POST',
-          body: formData,
-        });
-      }
-
-      const jsonData = await response.json();
-      return jsonData;
-    }
-
-    async function sendMessage() {
-      const inputElement = document.getElementById('user-input');
-      const fileInput = document.getElementById('file-input');
-      const messagesContainer = document.getElementById('messages');
-      
-      const userInput = inputElement.value.trim();
-      if (!userInput && (!fileInput.files || fileInput.files.length === 0)) {
-        return;
-      }
-
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add('message', 'user-message');
-      messageDiv.textContent = userInput;
-      messagesContainer.appendChild(messageDiv);
-      
-      const parameters = {
-        prompt: userInput,
-        // additional parameters if needed
-      };
-      
-      try {
-        const predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
-        
-        const botMessageDiv = document.createElement('div');
-        botMessageDiv.classList.add('message', 'bot-message');
-        botMessageDiv.textContent = predictionResult.prediction;
-        messagesContainer.appendChild(botMessageDiv);
-      } catch (error) {
-        console.error('Prediction Error:', error);
-        const errorMessageDiv = document.createElement('div');
-        errorMessageDiv.classList.add('message', 'bot-message');
-        errorMessageDiv.textContent = 'Error fetching response. Please try again.';
-        messagesContainer.appendChild(errorMessageDiv);
-      }
-
-      // Clear input and file fields after sending message
-      inputElement.value = '';
-      fileInput.value = '';
-    }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Recognition Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/whisper@0.3.3/lib/index.min.js"></script>
 </head>
 <body>
-  <div class="chat-container">
-    <h1>Chooch AI Chat</h1>
-    <ul id="messages" class="messages">
-      <!-- Chat messages will be dynamically added here -->
-    </ul>
-    <input type="text" id="user-input" placeholder="Enter your message...">
-    <input type="file" id="file-input" class="image-upload">
-    <button onclick="sendMessage()">Send</button>
-  </div>
+    <h1>Voice Recognition Example</h1>
+    <button onclick="startListening()">Start Listening</button>
+    <div id="transcription"></div>
+
+    <script>
+        function startListening() {
+            const recognition = new Whisper.Recognition();
+            recognition.start();
+
+            recognition.onResult = function(transcript) {
+                document.getElementById('transcription').innerText = transcript;
+            };
+        }
+    </script>
 </body>
 </html>
