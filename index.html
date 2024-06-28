@@ -5,116 +5,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chooch AI Chat</title>
   <style>
-    body {
-      background-color: #1a1a1a;
-      color: #ccc;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
     .chat-container {
-      width: 90%;
-      max-width: 400px;
-      border: 1px solid #333;
+      width: 400px;
+      margin: auto;
+      border: 1px solid #ccc;
       padding: 10px;
-      background-color: #333;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      border-radius: 10px;
+      background-color: #f9f9f9;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
     .messages {
       list-style-type: none;
       padding: 0;
-      margin: 0;
     }
     .message {
       margin-bottom: 10px;
     }
     .user-message {
-      background-color: #4d4d4d;
-      color: #fff;
+      background-color: #e6f2ff;
       padding: 8px;
-      border-radius: 8px;
-      max-width: 80%;
-      word-wrap: break-word;
-      clear: both;
-      float: right;
+      border-radius: 5px;
     }
     .bot-message {
-      background-color: #666;
-      color: #fff;
+      background-color: #d9ead3;
       padding: 8px;
-      border-radius: 8px;
-      max-width: 80%;
-      word-wrap: break-word;
-      clear: both;
-      float: left;
+      border-radius: 5px;
     }
     .image-upload {
       margin-top: 10px;
     }
-    .input-container {
-      margin-top: 10px;
-      display: flex;
-    }
-    .input-container input[type="text"] {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 5px 0 0 5px;
-      font-size: 16px;
-    }
-    .input-container input[type="file"] {
-      border: none;
-      border-radius: 0 5px 5px 0;
-      padding: 10px;
-      background-color: #666;
-      color: #fff;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    .input-container button {
-      border: none;
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 16px;
-      margin-left: 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .input-container button:hover {
-      background-color: #45a049;
-    }
   </style>
   <script>
-    async function imageChatPredict(modelId, parameters, filePath = "", apiKey = null) {
+    async function imageChatPredict(modelId, parameters, fileInput, apiKey = null) {
       const hostName = "https://chat-api.chooch.ai";
-      const apiUrl = `${hostName}/predict?api_key=${apiKey || ''}`;
-
-      const formData = new FormData();
-      formData.append('parameters', JSON.stringify(parameters));
-      formData.append('model_id', modelId);
-
-      let options = {
-        method: 'POST',
-        body: formData,
+      const prompt = parameters.prompt || "default prompt";
+      
+      const data = {
+        parameters: {
+          prompt,
+          ...parameters,
+          source_id: "7745844e-23bb-46fd-84ef-4f8e4aefc0b1",
+        },
+        model_id: modelId,
       };
 
-      if (filePath !== "") {
-        const file = await fetch(filePath).then(response => response.blob());
-        formData.append('file', file);
+      const url = `${hostName}/predict?api_key=${apiKey || ""}`;
+      let response;
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        // normal post
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+      } else {
+        // load file and post
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(data));
+        formData.append('file', fileInput.files[0]);
+
+        response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+        });
       }
 
-      const response = await fetch(apiUrl, options);
       const jsonData = await response.json();
-
       return jsonData;
     }
 
@@ -135,13 +93,11 @@
       
       const parameters = {
         prompt: userInput,
-        // Optional parameters can be added here:
-        // lang: "es",
-        // max_new_tokens: 512,
+        // additional parameters if needed
       };
       
       try {
-        const predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput.files[0], "xxxxx-xxxx-xxxx-xxx-xxxxxxxx");
+        const predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
         
         const botMessageDiv = document.createElement('div');
         botMessageDiv.classList.add('message', 'bot-message');
@@ -163,15 +119,13 @@
 </head>
 <body>
   <div class="chat-container">
-    <h1 style="text-align: center; color: #fff;">Chooch AI Chat</h1>
+    <h1>Chooch AI Chat</h1>
     <ul id="messages" class="messages">
       <!-- Chat messages will be dynamically added here -->
     </ul>
-    <div class="input-container">
-      <input type="text" id="user-input" placeholder="Enter your message...">
-      <input type="file" id="file-input" class="image-upload">
-      <button onclick="sendMessage()">Send</button>
-    </div>
+    <input type="text" id="user-input" placeholder="Enter your message...">
+    <input type="file" id="file-input" class="image-upload">
+    <button onclick="sendMessage()">Send</button>
   </div>
 </body>
 </html>
