@@ -94,44 +94,27 @@
     }
   </style>
   <script>
-    async function imageChatPredict(modelId, parameters, fileInput, apiKey = null) {
+    async function imageChatPredict(modelId, parameters, filePath = "", apiKey = null) {
       const hostName = "https://chat-api.chooch.ai";
-      const prompt = parameters.prompt || "default prompt";
-      
-      const data = {
-        parameters: {
-          prompt,
-          ...parameters,
-          source_id: "7745844e-23bb-46fd-84ef-4f8e4aefc0b1",
-        },
-        model_id: modelId,
+      const apiUrl = `${hostName}/predict?api_key=${apiKey || ''}`;
+
+      const formData = new FormData();
+      formData.append('parameters', JSON.stringify(parameters));
+      formData.append('model_id', modelId);
+
+      let options = {
+        method: 'POST',
+        body: formData,
       };
 
-      const url = `${hostName}/predict?api_key=${apiKey || ""}`;
-      let response;
-
-      if (!fileInput.files || fileInput.files.length === 0) {
-        // normal post
-        response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-      } else {
-        // load file and post
-        const formData = new FormData();
-        formData.append('data', JSON.stringify(data));
-        formData.append('file', fileInput.files[0]);
-
-        response = await fetch(url, {
-          method: 'POST',
-          body: formData,
-        });
+      if (filePath !== "") {
+        const file = await fetch(filePath).then(response => response.blob());
+        formData.append('file', file);
       }
 
+      const response = await fetch(apiUrl, options);
       const jsonData = await response.json();
+
       return jsonData;
     }
 
@@ -152,11 +135,13 @@
       
       const parameters = {
         prompt: userInput,
-        // additional parameters if needed
+        // Optional parameters can be added here:
+        // lang: "es",
+        // max_new_tokens: 512,
       };
       
       try {
-        const predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
+        const predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput.files[0], "xxxxx-xxxx-xxxx-xxx-xxxxxxxx");
         
         const botMessageDiv = document.createElement('div');
         botMessageDiv.classList.add('message', 'bot-message');
