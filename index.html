@@ -11,22 +11,23 @@
             text-align: center;
             background-color: #f8f9fa;
             font-family: Arial, sans-serif;
+            padding-top: 20px;
         }
         h1 {
-            margin-top: 20px;
             margin-bottom: 20px;
         }
         video {
             border: 2px solid #007bff;
             border-radius: 5px;
         }
-        button {
-            margin-top: 20px;
-            margin-bottom: 20px;
+        #canvas {
+            display: none;
+        }
+        #capture {
+            margin-top: 10px;
         }
         #result {
             margin-top: 20px;
-            white-space: pre-wrap;
             text-align: left;
             background-color: #fff;
             border: 1px solid #ddd;
@@ -40,11 +41,22 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-    <h1>Image Chat API</h1>
-    <video id="video" width="640" height="480" autoplay></video>
-    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
-    <button id="capture" class="btn btn-primary">تصویر گرفتن</button>
-    <div id="result"></div>
+    <div class="container">
+        <h1>Image Chat API</h1>
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-6">
+                <video id="video" width="100%" autoplay></video>
+                <canvas id="canvas" width="640" height="480"></canvas>
+                <button id="capture" class="btn btn-primary mt-3"><i class="fas fa-camera"></i> گرفتن عکس</button>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-6">
+                <div id="result" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const apiKey = "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad";
         const modelId = "chooch-image-chat-3";
@@ -56,7 +68,7 @@
         const resultDiv = document.getElementById('result');
         const context = canvas.getContext('2d');
 
-        // دسترسی به وب‌کم
+        // Access the webcam
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
@@ -65,7 +77,7 @@
                 console.error("Error accessing webcam: " + err);
             });
 
-        // عملکرد دکمه Capture برای گرفتن عکس از وب‌کم و ارسال به API
+        // Function to capture image from webcam and send to API
         captureButton.addEventListener('click', () => {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = canvas.toDataURL('image/jpeg').split(',')[1];
@@ -79,55 +91,12 @@
 
             axios.put(`${hostName}/predict?api_key=${apiKey}`, payload)
                 .then(response => {
-                    resultDiv.textContent = JSON.stringify(response.data, null, 2);
+                    resultDiv.innerHTML = `<pre>${JSON.stringify(response.data, null, 2)}</pre>`;
                 })
                 .catch(error => {
                     console.error("Error sending request: " + error);
                 });
         });
-
-        // مثال‌های پردازش فایل‌های محلی و URL تصاویر
-        function imageChatPredictWithFile(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('data', JSON.stringify({ model_id: modelId }));
-
-            axios.post(`${hostName}/predict?api_key=${apiKey}`, formData)
-                .then(response => {
-                    console.log("Result for local file:", response.data);
-                })
-                .catch(error => {
-                    console.error("Error sending request: " + error);
-                });
-        }
-
-        function imageChatPredictWithUrl(imageUrl) {
-            const payload = {
-                model_id: modelId,
-                url: imageUrl
-            };
-
-            axios.post(`${hostName}/predict?api_key=${apiKey}`, payload)
-                .then(response => {
-                    console.log("Result for image URL:", response.data);
-                })
-                .catch(error => {
-                    console.error("Error sending request: " + error);
-                });
-        }
-
-        // آپلود فایل برای مثال پردازش فایل محلی
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.onchange = () => {
-            const file = fileInput.files[0];
-            imageChatPredictWithFile(file);
-        };
-        document.body.appendChild(fileInput);
-
-        // مثال پردازش URL تصویر
-        const imageUrl = "https://example.com/image.jpg";
-        imageChatPredictWithUrl(imageUrl);
     </script>
 </body>
 </html>
