@@ -50,7 +50,11 @@
             <input type="text" class="form-control" id="imageUrl" placeholder="https://example.com/image.jpg">
             <small id="imageUrlHelp" class="form-text text-muted">لینک مستقیم به تصویر مورد نظر را وارد کنید.</small>
         </div>
-        <button id="sendButton" class="btn btn-success"><i class="fas fa-paper-plane"></i> ارسال تصویر</button>
+        <div class="form-group">
+            <label for="prompt">پیام متنی:</label>
+            <textarea class="form-control" id="prompt" rows="3" placeholder="توضیحاتی در مورد تصویر..."></textarea>
+        </div>
+        <button id="sendButton" class="btn btn-success"><i class="fas fa-paper-plane"></i> ارسال تصویر و متن</button>
         <div id="result" class="mt-3"></div>
         <div id="imageContainer" class="image-container mt-3" style="display: none;">
             <img id="previewImage" src="" alt="Predicted Image" style="max-width: 100%; max-height: 400px;">
@@ -64,12 +68,14 @@
 
         const sendButton = document.getElementById('sendButton');
         const imageUrlInput = document.getElementById('imageUrl');
+        const promptInput = document.getElementById('prompt');
         const resultDiv = document.getElementById('result');
         const imageContainer = document.getElementById('imageContainer');
         const previewImage = document.getElementById('previewImage');
 
         sendButton.addEventListener('click', () => {
             const imageUrl = imageUrlInput.value.trim();
+            const prompt = promptInput.value.trim();
             if (!imageUrl) {
                 alert('لطفاً لینک تصویر را وارد کنید.');
                 return;
@@ -78,6 +84,7 @@
             const payload = {
                 model_id: modelId,
                 url: imageUrl,
+                prompt: prompt,
                 conf_thresh: 0.4,
                 nms_thresh: 0.45
             };
