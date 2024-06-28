@@ -2,6 +2,7 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Chat API</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
@@ -26,6 +27,9 @@
         #capture {
             margin-top: 10px;
         }
+        #sendButton {
+            margin-top: 10px;
+        }
         #result {
             margin-top: 20px;
             text-align: left;
@@ -48,6 +52,7 @@
                 <video id="video" width="100%" autoplay></video>
                 <canvas id="canvas" width="640" height="480"></canvas>
                 <button id="capture" class="btn btn-primary mt-3"><i class="fas fa-camera"></i> گرفتن عکس</button>
+                <button id="sendButton" class="btn btn-success mt-3"><i class="fas fa-paper-plane"></i> ارسال عکس</button>
             </div>
         </div>
         <div class="row justify-content-center">
@@ -65,6 +70,7 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const captureButton = document.getElementById('capture');
+        const sendButton = document.getElementById('sendButton');
         const resultDiv = document.getElementById('result');
         const context = canvas.getContext('2d');
 
@@ -77,9 +83,13 @@
                 console.error("Error accessing webcam: " + err);
             });
 
-        // Function to capture image from webcam and send to API
+        // Function to capture image from webcam and display on canvas
         captureButton.addEventListener('click', () => {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        });
+
+        // Function to send captured image to API
+        sendButton.addEventListener('click', () => {
             const imageData = canvas.toDataURL('image/jpeg').split(',')[1];
 
             const payload = {
