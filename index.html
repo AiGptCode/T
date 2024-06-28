@@ -52,6 +52,8 @@
                 <video id="video" width="100%" autoplay></video>
                 <canvas id="canvas" width="640" height="480"></canvas>
                 <button id="capture" class="btn btn-primary mt-3"><i class="fas fa-camera"></i> گرفتن عکس</button>
+                <input type="file" id="fileInput" style="display: none;" accept="image/*">
+                <button id="uploadButton" class="btn btn-success mt-3"><i class="fas fa-upload"></i> انتخاب عکس</button>
                 <button id="sendButton" class="btn btn-success mt-3"><i class="fas fa-paper-plane"></i> ارسال عکس</button>
             </div>
         </div>
@@ -70,7 +72,9 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const captureButton = document.getElementById('capture');
+        const uploadButton = document.getElementById('uploadButton');
         const sendButton = document.getElementById('sendButton');
+        const fileInput = document.getElementById('fileInput');
         const resultDiv = document.getElementById('result');
         const context = canvas.getContext('2d');
 
@@ -86,6 +90,26 @@
         // Function to capture image from webcam and display on canvas
         captureButton.addEventListener('click', () => {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        });
+
+        // Function to handle file selection and display on canvas
+        uploadButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
         });
 
         // Function to send captured image to API
