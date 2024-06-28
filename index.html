@@ -82,11 +82,17 @@
             }
 
             const payload = {
-                model_id: modelId,
-                url: imageUrl,
-                prompt: prompt,
-                conf_thresh: 0.4,
-                nms_thresh: 0.45
+                data: {
+                    model_id: modelId,
+                    inputs: {
+                        url: imageUrl,
+                        prompt: prompt
+                    },
+                    parameters: {
+                        conf_thresh: 0.4,
+                        nms_thresh: 0.45
+                    }
+                }
             };
 
             axios.post(`${hostName}/predict?api_key=${apiKey}`, payload)
