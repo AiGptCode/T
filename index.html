@@ -50,7 +50,6 @@
                 <canvas id="canvas" width="640" height="480"></canvas>
                 <div class="btn-group">
                     <button id="capture" class="btn btn-primary"><i class="fas fa-camera"></i> گرفتن عکس</button>
-                    <button id="uploadButton" class="btn btn-success"><i class="fas fa-upload"></i> انتخاب عکس</button>
                     <button id="sendButton" class="btn btn-success"><i class="fas fa-paper-plane"></i> ارسال عکس</button>
                 </div>
             </div>
@@ -70,7 +69,6 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const captureButton = document.getElementById('capture');
-        const uploadButton = document.getElementById('uploadButton');
         const sendButton = document.getElementById('sendButton');
         const resultDiv = document.getElementById('result');
         const context = canvas.getContext('2d');
@@ -89,30 +87,7 @@
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
         });
 
-        // Function to handle file selection and display on canvas
-        uploadButton.addEventListener('click', () => {
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.style.display = 'none';
-            fileInput.onchange = () => {
-                const file = fileInput.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const img = new Image();
-                        img.onload = function() {
-                            context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        };
-                        img.src = event.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-            fileInput.click();
-        });
-
-        // Function to send captured image to API
+        // Function to send captured image to API and display response
         sendButton.addEventListener('click', () => {
             const imageData = canvas.toDataURL('image/jpeg').split(',')[1];
 
@@ -126,10 +101,16 @@
 
             axios.post(`${hostName}/predict?api_key=${apiKey}`, payload)
                 .then(response => {
-                    resultDiv.innerHTML = `<pre>${JSON.stringify(response.data, null, 2)}</pre>`;
+                    const responseData = response.data;
+                    if (responseData && responseData.text) {
+                        resultDiv.innerHTML = `<p><strong>Text Response:</strong> ${responseData.text}</p>`;
+                    } else {
+                        resultDiv.innerHTML = "<p>No text response found.</p>";
+                    }
                 })
                 .catch(error => {
                     console.error("Error sending request: " + error);
+                    resultDiv.innerHTML = "<p>Error sending request. Please try again.</p>";
                 });
         });
     </script>
