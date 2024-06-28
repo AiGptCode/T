@@ -77,7 +77,11 @@
                 })
                 .catch(error => {
                     console.error("Error sending request: " + error);
-                    resultDiv.innerHTML = `<pre>Error: ${error.response ? error.response.data : error.message}</pre>`;
+                    if (error.response) {
+                        resultDiv.innerHTML = `<pre>Error: ${JSON.stringify(error.response.data, null, 2)}</pre>`;
+                    } else {
+                        resultDiv.innerHTML = `<pre>Error: ${error.message}</pre>`;
+                    }
                 });
         });
     </script>
