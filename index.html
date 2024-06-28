@@ -21,6 +21,20 @@
                 return;
             }
 
+            // Check if permission is granted
+            if (!Whisper.isPermissionGranted()) {
+                Whisper.requestPermission().then(function() {
+                    startRecognition(recognition);
+                }).catch(function(err) {
+                    console.error('Permission denied:', err);
+                    alert('Permission denied for microphone access.');
+                });
+            } else {
+                startRecognition(recognition);
+            }
+        }
+
+        function startRecognition(recognition) {
             recognition.start();
 
             recognition.onResult = function(transcript) {
@@ -29,9 +43,10 @@
 
             recognition.onError = function(error) {
                 console.error('Recognition error:', error);
+                alert('Speech recognition error: ' + error);
                 // Handle error display or fallback mechanism
             };
         }
     </script>
 </body>
-</html> 
+</html>
