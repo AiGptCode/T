@@ -14,10 +14,22 @@
     <script>
         function startListening() {
             const recognition = new Whisper.Recognition();
+            
+            // Check if recognition is supported
+            if (!recognition.isSupported()) {
+                alert("Speech recognition is not supported in this browser.");
+                return;
+            }
+
             recognition.start();
 
             recognition.onResult = function(transcript) {
                 document.getElementById('transcription').innerText = transcript;
+            };
+
+            recognition.onError = function(error) {
+                console.error('Recognition error:', error);
+                // Handle error display or fallback mechanism
             };
         }
     </script>
