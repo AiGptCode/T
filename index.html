@@ -35,6 +35,9 @@
     .image-upload {
       margin-top: 10px;
     }
+    .document-upload {
+      margin-top: 10px;
+    }
   </style>
   <script>
     async function imageChatPredict(modelId, parameters, fileInput, apiKey = null) {
@@ -81,41 +84,89 @@
     async function sendMessage() {
       const inputElement = document.getElementById('user-input');
       const fileInput = document.getElementById('file-input');
+      const documentInput = document.getElementById('document-input');
       const messagesContainer = document.getElementById('messages');
       
       const userInput = inputElement.value.trim();
-      if (!userInput && (!fileInput.files || fileInput.files.length === 0)) {
+      const documentFile = documentInput.files ? documentInput.files[0] : null;
+      
+      if (!userInput && (!fileInput.files || fileInput.files.length === 0) && !documentFile) {
         return;
       }
 
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add('message', 'user-message');
-      messageDiv.textContent = userInput;
-      messagesContainer.appendChild(messageDiv);
-      
-      const parameters = {
-        prompt: userInput,
-        // additional parameters if needed
-      };
-      
-      try {
-        const predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
+      // User text message
+      if (userInput) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'user-message');
+        messageDiv.textContent = userInput;
+        messagesContainer.appendChild(messageDiv);
         
-        const botMessageDiv = document.createElement('div');
-        botMessageDiv.classList.add('message', 'bot-message');
-        botMessageDiv.textContent = predictionResult.prediction;
-        messagesContainer.appendChild(botMessageDiv);
-      } catch (error) {
-        console.error('Prediction Error:', error);
-        const errorMessageDiv = document.createElement('div');
-        errorMessageDiv.classList.add('message', 'bot-message');
-        errorMessageDiv.textContent = 'Error fetching response. Please try again.';
-        messagesContainer.appendChild(errorMessageDiv);
+        const parameters = {
+          prompt: userInput,
+          // additional parameters if needed
+        };
+        
+        try {
+          const predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
+          
+          const botMessageDiv = document.createElement('div');
+          botMessageDiv.classList.add('message', 'bot-message');
+          botMessageDiv.textContent = predictionResult.prediction;
+          messagesContainer.appendChild(botMessageDiv);
+        } catch (error) {
+          console.error('Prediction Error:', error);
+          const errorMessageDiv = document.createElement('div');
+          errorMessageDiv.classList.add('message', 'bot-message');
+          errorMessageDiv.textContent = 'Error fetching response. Please try again.';
+          messagesContainer.appendChild(errorMessageDiv);
+        }
+      }
+
+      // User image upload
+      if (fileInput.files && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const imageMessageDiv = document.createElement('div');
+        imageMessageDiv.classList.add('message', 'user-message');
+        const image = document.createElement('img');
+        image.src = URL.createObjectURL(file);
+        image.style.maxWidth = '100%';
+        image.style.height = 'auto';
+        imageMessageDiv.appendChild(image);
+        messagesContainer.appendChild(imageMessageDiv);
+
+        try {
+          const predictionResult = await imageChatPredict("chooch-image-chat-3", {}, fileInput, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
+          
+          const botMessageDiv = document.createElement('div');
+          botMessageDiv.classList.add('message', 'bot-message');
+          botMessageDiv.textContent = predictionResult.prediction;
+          messagesContainer.appendChild(botMessageDiv);
+        } catch (error) {
+          console.error('Prediction Error:', error);
+          const errorMessageDiv = document.createElement('div');
+          errorMessageDiv.classList.add('message', 'bot-message');
+          errorMessageDiv.textContent = 'Error fetching response. Please try again.';
+          messagesContainer.appendChild(errorMessageDiv);
+        }
+      }
+
+      // User document upload
+      if (documentFile) {
+        const documentMessageDiv = document.createElement('div');
+        documentMessageDiv.classList.add('message', 'user-message');
+        const documentLink = document.createElement('a');
+        documentLink.href = URL.createObjectURL(documentFile);
+        documentLink.textContent = `Uploaded Document: ${documentFile.name}`;
+        documentMessageDiv.appendChild(documentLink);
+        messagesContainer.appendChild(documentMessageDiv);
+
+        // You can implement document handling logic here if required
       }
 
       // Clear input and file fields after sending message
       inputElement.value = '';
       fileInput.value = '';
+      documentInput.value = '';
     }
   </script>
 </head>
@@ -127,6 +178,7 @@
     </ul>
     <input type="text" id="user-input" placeholder="Enter your message...">
     <input type="file" id="file-input" class="image-upload">
+    <input type="file" id="document-input" class="document-upload" accept=".pdf,.doc,.docx">
     <button onclick="sendMessage()">Send</button>
   </div>
 </body>
