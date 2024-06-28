@@ -5,75 +5,139 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chooch AI Chat</title>
   <style>
+    body {
+      background-color: #1a1a1a;
+      color: #ccc;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
     .chat-container {
       width: 400px;
-      margin: auto;
-      border: 1px solid #ccc;
+      margin: 50px auto;
+      border: 1px solid #333;
       padding: 10px;
-      background-color: #f9f9f9;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: #333;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
     }
     .messages {
       list-style-type: none;
       padding: 0;
+      margin: 0;
     }
     .message {
       margin-bottom: 10px;
     }
     .user-message {
-      background-color: #e6f2ff;
+      background-color: #4d4d4d;
+      color: #fff;
       padding: 8px;
-      border-radius: 5px;
+      border-radius: 8px;
+      max-width: 80%;
       word-wrap: break-word;
+      clear: both;
+      float: right;
     }
     .bot-message {
-      background-color: #d9ead3;
+      background-color: #666;
+      color: #fff;
       padding: 8px;
-      border-radius: 5px;
+      border-radius: 8px;
+      max-width: 80%;
       word-wrap: break-word;
+      clear: both;
+      float: left;
     }
     .image-upload {
       margin-top: 10px;
     }
-    .document-upload {
+    .input-container {
       margin-top: 10px;
+      display: flex;
+    }
+    .input-container input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px 0 0 5px;
+      font-size: 16px;
+    }
+    .input-container input[type="file"] {
+      border: none;
+      border-radius: 0 5px 5px 0;
+      padding: 10px;
+      background-color: #666;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .input-container button {
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin-left: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .input-container button:hover {
+      background-color: #45a049;
     }
   </style>
   <script>
     async function imageChatPredict(modelId, parameters, fileInput, apiKey = null) {
       const hostName = "https://chat-api.chooch.ai";
-      const apiUrl = `${hostName}/predict?api_key=${apiKey || ''}`;
-
-      const formData = new FormData();
-      formData.append('parameters', JSON.stringify(parameters));
-      formData.append('model_id', modelId);
-
-      let options = {
-        method: 'POST',
-        body: formData,
+      const prompt = parameters.prompt || "default prompt";
+      
+      const data = {
+        parameters: {
+          prompt,
+          ...parameters,
+          source_id: "7745844e-23bb-46fd-84ef-4f8e4aefc0b1",
+        },
+        model_id: modelId,
       };
 
-      if (fileInput && fileInput.files && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        formData.append('file', file);
+      const url = `${hostName}/predict?api_key=${apiKey || ""}`;
+      let response;
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        // normal post
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+      } else {
+        // load file and post
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(data));
+        formData.append('file', fileInput.files[0]);
+
+        response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+        });
       }
 
-      const response = await fetch(apiUrl, options);
       const jsonData = await response.json();
-
       return jsonData;
     }
 
     async function sendMessage() {
       const inputElement = document.getElementById('user-input');
       const fileInput = document.getElementById('file-input');
-      const documentInput = document.getElementById('document-input');
       const messagesContainer = document.getElementById('messages');
       
       const userInput = inputElement.value.trim();
-      const documentFile = documentInput.files.length > 0 ? documentInput.files[0] : null;
-
-      if (!userInput && (!fileInput.files || fileInput.files.length === 0) && !documentFile) {
+      if (!userInput && (!fileInput.files || fileInput.files.length === 0)) {
         return;
       }
 
@@ -88,32 +152,8 @@
       };
       
       try {
-        let predictionResult = null;
+        const predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
         
-        // Handle image prediction
-        if (fileInput.files && fileInput.files.length > 0) {
-          predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, fileInput, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
-        }
-        
-        // Handle document prediction
-        else if (documentFile) {
-          const formData = new FormData();
-          formData.append('file', documentFile);
-          formData.append('data', JSON.stringify(parameters));
-          
-          const response = await fetch(`${hostName}/predict?api_key=${apiKey}`, {
-            method: 'POST',
-            body: formData,
-          });
-          
-          predictionResult = await response.json();
-        }
-        
-        // Handle text message prediction
-        else {
-          predictionResult = await imageChatPredict("chooch-image-chat-3", parameters, null, "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad");
-        }
-
         const botMessageDiv = document.createElement('div');
         botMessageDiv.classList.add('message', 'bot-message');
         botMessageDiv.textContent = predictionResult.prediction;
@@ -129,20 +169,20 @@
       // Clear input and file fields after sending message
       inputElement.value = '';
       fileInput.value = '';
-      documentInput.value = '';
     }
   </script>
 </head>
 <body>
   <div class="chat-container">
-    <h1>Chooch AI Chat</h1>
+    <h1 style="text-align: center; color: #fff;">Chooch AI Chat</h1>
     <ul id="messages" class="messages">
       <!-- Chat messages will be dynamically added here -->
     </ul>
-    <input type="text" id="user-input" placeholder="Enter your message...">
-    <input type="file" id="file-input" class="image-upload">
-    <input type="file" id="document-input" class="document-upload">
-    <button onclick="sendMessage()">Send</button>
+    <div class="input-container">
+      <input type="text" id="user-input" placeholder="Enter your message...">
+      <input type="file" id="file-input" class="image-upload">
+      <button onclick="sendMessage()">Send</button>
+    </div>
   </div>
 </body>
 </html>
