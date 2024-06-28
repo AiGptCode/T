@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Chat API</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Image Chat API</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+    <button id="capture">Capture Image</button>
+    <div id="result"></div>
+    <script>
+        const apiKey = "744ca5c3-aa25-4db6-b4d8-93b48a2d79ad";
+        const modelId = "chooch-image-chat-3";
+        const hostName = "https://chat-api.chooch.ai";
+
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const resultDiv = document.getElementById('result');
+        const context = canvas.getContext('2d');
+
+        // دسترسی به وب‌کم
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing webcam: " + err);
+            });
+
+        // عملکرد دکمه Capture برای گرفتن عکس از وب‌کم و ارسال به API
+        captureButton.addEventListener('click', () => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/jpeg').split(',')[1];
+
+            const payload = {
+                base64str: imageData,
+                model_id: modelId,
+                conf_thresh: 0.4,
+                nms_thresh: 0.45
+            };
+
+            axios.put(`${hostName}/predict?api_key=${apiKey}`, payload)
+                .then(response => {
+                    resultDiv.textContent = JSON.stringify(response.data, null, 2);
+                })
+                .catch(error => {
+                    console.error("Error sending request: " + error);
+                });
+        });
+
+        // مثال‌های پردازش فایل‌های محلی و URL تصاویر
+        function imageChatPredictWithFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('data', JSON.stringify({ model_id: modelId }));
+
+            axios.post(`${hostName}/predict?api_key=${apiKey}`, formData)
+                .then(response => {
+                    console.log("Result for local file:", response.data);
+                })
+                .catch(error => {
+                    console.error("Error sending request: " + error);
+                });
+        }
+
+        function imageChatPredictWithUrl(imageUrl) {
+            const payload = {
+                model_id: modelId,
+                url: imageUrl
+            };
+
+            axios.post(`${hostName}/predict?api_key=${apiKey}`, payload)
+                .then(response => {
+                    console.log("Result for image URL:", response.data);
+                })
+                .catch(error => {
+                    console.error("Error sending request: " + error);
+                });
+        }
+
+        // آپلود فایل برای مثال پردازش فایل محلی
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.onchange = () => {
+            const file = fileInput.files[0];
+            imageChatPredictWithFile(file);
+        };
+        document.body.appendChild(fileInput);
+
+        // مثال پردازش URL تصویر
+        const imageUrl = "https://example.com/image.jpg";
+        imageChatPredictWithUrl(imageUrl);
+    </script>
+</body>
+</html>
